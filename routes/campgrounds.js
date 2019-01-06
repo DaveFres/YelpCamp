@@ -4,19 +4,40 @@ var Campground = require("../models/campground");
 var middleware = require("../middleware"); // check out bookmark about index.js files
 
 // INDEX - show all campground
-router.get("/", function(req, res){
-    // Get all campgrounds from DB
-    Campground.find({}, function(err, allCampgrounds){
-        if(err){
-            console.log(err);
-        } else {
-            /*res.render("campgrounds/index", {campgrounds : allCampgrounds, currentUser: req.user}); 
-            --- не нужно, за счет app.use выше*/
-            res.render("campgrounds/index", {campgrounds : allCampgrounds});
-        }
-    });
+// router.get("/", function(req, res){
+//     // Get all campgrounds from DB
+//     Campground.find({}, function(err, allCampgrounds){
+//         if(err){
+//             console.log(err);
+//         } else {
+//             /*res.render("campgrounds/index", {campgrounds : allCampgrounds, currentUser: req.user}); 
+//             --- не нужно, за счет app.use выше*/
+//             res.render("campgrounds/index", {campgrounds : allCampgrounds});
+//         }
+//     });
   
+// });
+
+// INDEX - show all campgrounds
+router.get("/", function (req, res) {
+    var perPage = 8;
+    var pageQuery = parseInt(req.query.page);
+    var pageNumber = pageQuery ? pageQuery : 1;
+    Campground.find({}).skip((perPage * pageNumber) - perPage).limit(perPage).exec(function (err, allCampgrounds) {
+        Campground.countDocuments().exec(function (err, count) {
+            if (err) {
+                console.log(err);
+            } else {
+                res.render("campgrounds/index", {
+                    campgrounds: allCampgrounds,
+                    current: pageNumber,
+                    pages: Math.ceil(count / perPage)
+                });
+            }
+        });
+    });
 });
+
 
 //CREATE - add new campground to DB
 router.post("/", middleware.isLoggedIn, function(req, res){
